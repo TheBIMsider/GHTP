@@ -1,7 +1,8 @@
 # GHTP - Carl's Golf Shame Repository 🤦‍♂️
-My personal version of the public GHT app - trust me nobody wants these golf stats ⛳🤔
 
 **⚠️ Personal Data Alert**: This is my actual golf tracking app with real (embarrassingly high) scores. 
+
+My personal version of the public GHT app - trust me nobody wants these golf stats ⛳🤔
 
 You can find the public version with instructions and a repo to fork [HERE](https://github.com/TheBIMsider/GHT)
 
