@@ -4,7 +4,7 @@
 
 My personal version of the public GHT app - trust me nobody wants these golf stats ⛳🤔
 
-You can find the public version with instructions and a repo to fork [HERE](https://github.com/TheBIMsider/GHT)
+You can find the public GHT version with instructions and a repo to fork [HERE](https://github.com/TheBIMsider/GHT)
 
 # 🏌️‍♂️ Golf Handicap Tracker
 
