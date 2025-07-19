@@ -2,7 +2,7 @@
 
 **⚠️ Personal Data Alert**: This is my actual golf tracking app with real (embarrassingly high) scores.  
 
-### **Only The Brave** Should Look Here 👉 [Carl's Golf Shame Repository 🤦‍♂️](https://thebimsider.github.io/GHTP/V02/)
+### **Only The Brave** Should Look Here 👉 [Carl's Golf Shame Repository 🤦‍♂️](https://thebimsider.github.io/GHTP/V021/)
 
 My personal version of the public GHT app - trust me nobody wants these golf stats ⛳🤔
 
@@ -20,7 +20,16 @@ This project was created as a "vibe coding" session using **Claude Sonnet 4** AI
 
 ## 📋 Version History
 
-### [Version 2.0](https://thebimsider.github.io/GHTP/V02/) (Current) - Cloud Storage
+### [Version 2.1](https://thebimsider.github.io/GHT/V021/) (Current) - Enhanced with Tees Tracking
+- **Tees Tracking**: Record which tee boxes you played from for better round documentation
+- **Compact Table Design**: Optimized table layout that fits laptop screens without horizontal scrolling
+- **Improved Column Headers**: Shortened headers ("18-Hole", "Diff", "Handicap") for better space utilization
+- **Enhanced Error Handling**: Better validation and user-friendly error messages
+- **Performance Optimizations**: Faster table updates and improved responsiveness
+- **Modern Code Structure**: Enhanced maintainability with better code organization
+- **Updated Google Sheets Schema**: Added "tees" column to data structure
+
+### [Version 2.0](https://thebimsider.github.io/GHTP/V02/) - Cloud Storage
 - **Google Sheets Integration**: All data now stored in Google Sheets via SheetDB API
 - **Cross-Device Sync**: Access your handicap data from any device
 - **Data Persistence**: No more lost data when clearing browser cache
