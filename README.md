@@ -8,15 +8,16 @@ My personal version of the public GHT app - trust me nobody wants these golf sta
 
 **Public GHT version with instructions and a repo to fork available [HERE](https://github.com/TheBIMsider/GHT)**
 
-# 🏌️‍♂️ Golf Handicap Tracker
+# 🏌️‍♂️ Par-Tracker 42 🤖
+## *The Ultimate Answer to Your Golf Score Tracking Needs*
 
 A simple, web-based golf handicap calculator that helps golfers track their rounds and calculate their USGA Handicap Index. Built with vanilla HTML, CSS, and JavaScript, designed to be hosted on GitHub Pages with data storage via Google Sheets.
 
 ## 🤖 AI-Powered Development
 
-This project was created as a "vibe coding" session using **Claude Sonnet 4** AI assistance, with human guidance and golf expertise provided by **Carl Storms** aka ["The BIMsider"](https://bio.link/thebimsider). 
+Par-Tracker 42 was created as a "vibe coding" session using **Claude Sonnet 4** AI assistance, with human guidance and golf expertise provided by **Carl Storms** aka ["The BIMsider"](https://bio.link/thebimsider).🏌️‍♂️⛳
 
-*A collaboration between human creativity and AI efficiency - proving that even bad golfers can build good apps.*
+*A collaboration between human creativity and AI efficiency - proving that even bad golfers can build good apps. And yes, "42" is indeed the ultimate answer... to golf score tracking!* 🤖
 
 ## 📋 Version History
 
