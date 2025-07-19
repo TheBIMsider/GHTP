@@ -13,24 +13,24 @@
 let rounds = [];
 let currentSort = {
   column: 'date',
-  direction: 'desc'
+  direction: 'desc',
 };
 
-const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/95ui9w280ruih';
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/wshtvyw9sdvff';
 
 const CONFIG = {
   MAX_RETRIES: 3,
   RETRY_DELAY: 1000,
   COURSE_TYPES: {
     regulation: 'Regulation',
-    executive: 'Executive', 
+    executive: 'Executive',
     par3: 'Par 3',
-    practice: 'Practice'
+    practice: 'Practice',
   },
   HANDICAP_RULES: {
     MIN_ROUNDS_FOR_TREND: 10,
-    USGA_FACTOR: 0.96
-  }
+    USGA_FACTOR: 0.96,
+  },
 };
 
 let cachedElements = {};
@@ -69,14 +69,16 @@ function cacheElements() {
     slopeInput: document.getElementById('slope'),
     courseTypeSelect: document.getElementById('courseType'),
     includeHandicapSelect: document.getElementById('includeInHandicap'),
-    
+
     // Display elements
     handicapDisplay: document.getElementById('handicapDisplay'),
     roundsUsed: document.getElementById('roundsUsed'),
-    regulationHandicapDisplay: document.getElementById('regulationHandicapDisplay'),
+    regulationHandicapDisplay: document.getElementById(
+      'regulationHandicapDisplay'
+    ),
     regulationRoundsUsed: document.getElementById('regulationRoundsUsed'),
     roundsBody: document.getElementById('roundsBody'),
-    
+
     // Stats elements
     totalRounds: document.getElementById('totalRounds'),
     avgScore: document.getElementById('avgScore'),
@@ -85,7 +87,7 @@ function cacheElements() {
     regulationTotalRounds: document.getElementById('regulationTotalRounds'),
     regulationAvgScore: document.getElementById('regulationAvgScore'),
     regulationBestScore: document.getElementById('regulationBestScore'),
-    regulationRecentTrend: document.getElementById('regulationRecentTrend')
+    regulationRecentTrend: document.getElementById('regulationRecentTrend'),
   };
 }
 
@@ -101,7 +103,17 @@ function validateInputs() {
   const courseType = cachedElements.courseTypeSelect.value;
 
   // UPDATED: Include tees in validation
-  if (!date || !course || !tees || !holes || !score || !par || !rating || !slope || !courseType) {
+  if (
+    !date ||
+    !course ||
+    !tees ||
+    !holes ||
+    !score ||
+    !par ||
+    !rating ||
+    !slope ||
+    !courseType
+  ) {
     throw new Error('Please fill in all fields');
   }
 
@@ -109,7 +121,8 @@ function validateInputs() {
   if (course.length < 2) {
     throw new Error('Course name must be at least 2 characters');
   }
-  if (tees.length < 1) { // NEW: Tees validation
+  if (tees.length < 1) {
+    // NEW: Tees validation
     throw new Error('Tees played must be specified');
   }
   if (![9, 18].includes(holes)) {
@@ -139,25 +152,34 @@ async function retryOperation(operation, maxRetries = CONFIG.MAX_RETRIES) {
       if (attempt === maxRetries) {
         throw error;
       }
-      console.warn(`Attempt ${attempt} failed, retrying in ${CONFIG.RETRY_DELAY}ms...`);
-      await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
+      console.warn(
+        `Attempt ${attempt} failed, retrying in ${CONFIG.RETRY_DELAY}ms...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, CONFIG.RETRY_DELAY));
     }
   }
 }
 
 function showError(error, context = 'Operation') {
   console.error(`${context} failed:`, error);
-  
+
   const errorMessages = {
-    'Please fill in all fields': 'Please fill in all fields before adding the round.',
-    'Tees played must be specified': 'Please specify which tees you played from.',
-    'Failed to save round to sheet': 'Unable to save your round. Please check your internet connection and try again.',
-    'Failed to load rounds from sheet': 'Unable to load your golf rounds. Please check your internet connection.',
-    'Failed to delete round from sheet': 'Unable to delete the round. Please try again.',
-    'Failed to update round in sheet': 'Unable to update the round. Please try again.'
+    'Please fill in all fields':
+      'Please fill in all fields before adding the round.',
+    'Tees played must be specified':
+      'Please specify which tees you played from.',
+    'Failed to save round to sheet':
+      'Unable to save your round. Please check your internet connection and try again.',
+    'Failed to load rounds from sheet':
+      'Unable to load your golf rounds. Please check your internet connection.',
+    'Failed to delete round from sheet':
+      'Unable to delete the round. Please try again.',
+    'Failed to update round in sheet':
+      'Unable to update the round. Please try again.',
   };
-  
-  const userMessage = errorMessages[error.message] || `${context} failed. Please try again.`;
+
+  const userMessage =
+    errorMessages[error.message] || `${context} failed. Please try again.`;
   alert(userMessage);
 }
 
@@ -173,7 +195,8 @@ async function addRound() {
 
   try {
     const inputs = validateInputs();
-    const includeInHandicap = cachedElements.includeHandicapSelect.value === 'true';
+    const includeInHandicap =
+      cachedElements.includeHandicapSelect.value === 'true';
 
     // Original 9-hole conversion logic
     let adjScore = inputs.score;
@@ -201,7 +224,7 @@ async function addRound() {
       adjScore: adjScore,
       rating: inputs.rating,
       slope: inputs.slope,
-      differential: parseFloat(differential.toFixed(2))
+      differential: parseFloat(differential.toFixed(2)),
     };
 
     await retryOperation(() => saveRoundToSheet(round));
@@ -211,7 +234,6 @@ async function addRound() {
 
     updateDisplay();
     clearForm();
-
   } catch (error) {
     showError(error, 'Adding round');
   } finally {
@@ -309,8 +331,12 @@ async function loadRounds() {
 
     rounds = await retryOperation(loadRoundsFromSheet);
     rounds.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    console.log('Successfully loaded', rounds.length, 'rounds from Google Sheets');
+
+    console.log(
+      'Successfully loaded',
+      rounds.length,
+      'rounds from Google Sheets'
+    );
   } catch (error) {
     console.error('Error loading rounds:', error);
     rounds = [];
@@ -320,7 +346,11 @@ async function loadRounds() {
       if (savedRounds) {
         rounds = JSON.parse(savedRounds);
         rounds.sort((a, b) => new Date(b.date) - new Date(a.date));
-        console.log('Loaded rounds from localStorage backup:', rounds.length, 'rounds');
+        console.log(
+          'Loaded rounds from localStorage backup:',
+          rounds.length,
+          'rounds'
+        );
       }
     } catch (localError) {
       console.log('No local backup available', localError);
@@ -336,7 +366,7 @@ function calculateHandicap(regulationOnly = false) {
   if (rounds.length === 0) return null;
 
   let handicapRounds = rounds.filter((round) => round.includeInHandicap);
-  
+
   if (regulationOnly) {
     handicapRounds = handicapRounds.filter(
       (round) => round.courseType === 'regulation'
@@ -392,8 +422,9 @@ function formatDateForDisplay(dateString) {
 }
 
 function updateRoundsTable() {
-  const tbody = cachedElements.roundsBody || document.getElementById('roundsBody');
-  
+  const tbody =
+    cachedElements.roundsBody || document.getElementById('roundsBody');
+
   if (!tbody) {
     console.error('Could not find table body element');
     return;
@@ -415,14 +446,24 @@ function updateRoundsTable() {
       <td>${formatDateForDisplay(round.date)}</td>
       <td>${round.course || ''}</td>
       <td>${round.tees || ''}</td>
-      <td><span class="course-type-${round.courseType || 'regulation'}">${getCourseTypeDisplay(round.courseType || 'regulation')}</span></td>
+      <td><span class="course-type-${
+        round.courseType || 'regulation'
+      }">${getCourseTypeDisplay(round.courseType || 'regulation')}</span></td>
       <td>${round.holes || ''}</td>
       <td>${round.score || ''}</td>
       <td>${round.par || ''}</td>
       <td>${round.adjScore || ''}</td>
-      <td>${round.differential ? parseFloat(round.differential).toFixed(1) : ''}</td>
-      <td><button class="toggle-handicap-btn ${round.includeInHandicap ? 'included' : 'excluded'}" onclick="toggleHandicapInclusion('${round.id}')">${round.includeInHandicap ? 'Yes' : 'No'}</button></td>
-      <td><button class="delete-btn" onclick="deleteRound('${round.id}')">Delete</button></td>
+      <td>${
+        round.differential ? parseFloat(round.differential).toFixed(1) : ''
+      }</td>
+      <td><button class="toggle-handicap-btn ${
+        round.includeInHandicap ? 'included' : 'excluded'
+      }" onclick="toggleHandicapInclusion('${round.id}')">${
+      round.includeInHandicap ? 'Yes' : 'No'
+    }</button></td>
+      <td><button class="delete-btn" onclick="deleteRound('${
+        round.id
+      }')">Delete</button></td>
     `;
     fragment.appendChild(row);
   });
@@ -504,7 +545,7 @@ function sortTable(column) {
 
 function updateSortIndicators() {
   const headers = document.querySelectorAll('#roundsTable th');
-  
+
   headers.forEach((header) => {
     header.innerHTML = header.innerHTML.replace(/\s*[↑↓]/, '');
     header.classList.remove('sorted-asc', 'sorted-desc');
@@ -534,8 +575,11 @@ function updateSortIndicators() {
 
 function updateHandicapDisplay() {
   const overallHandicapResult = calculateHandicap(false);
-  const handicapDisplay = cachedElements.handicapDisplay || document.getElementById('handicapDisplay');
-  const roundsUsed = cachedElements.roundsUsed || document.getElementById('roundsUsed');
+  const handicapDisplay =
+    cachedElements.handicapDisplay ||
+    document.getElementById('handicapDisplay');
+  const roundsUsed =
+    cachedElements.roundsUsed || document.getElementById('roundsUsed');
 
   if (overallHandicapResult) {
     handicapDisplay.textContent = overallHandicapResult.handicap.toFixed(1);
@@ -546,11 +590,16 @@ function updateHandicapDisplay() {
   }
 
   const regulationHandicapResult = calculateHandicap(true);
-  const regulationHandicapDisplay = cachedElements.regulationHandicapDisplay || document.getElementById('regulationHandicapDisplay');
-  const regulationRoundsUsed = cachedElements.regulationRoundsUsed || document.getElementById('regulationRoundsUsed');
+  const regulationHandicapDisplay =
+    cachedElements.regulationHandicapDisplay ||
+    document.getElementById('regulationHandicapDisplay');
+  const regulationRoundsUsed =
+    cachedElements.regulationRoundsUsed ||
+    document.getElementById('regulationRoundsUsed');
 
   if (regulationHandicapResult) {
-    regulationHandicapDisplay.textContent = regulationHandicapResult.handicap.toFixed(1);
+    regulationHandicapDisplay.textContent =
+      regulationHandicapResult.handicap.toFixed(1);
     regulationRoundsUsed.textContent = `${regulationHandicapResult.roundsUsed} of ${regulationHandicapResult.totalHandicapRounds} eligible`;
   } else {
     regulationHandicapDisplay.textContent = '--';
@@ -564,28 +613,39 @@ function updateStats() {
 }
 
 function updateAllCoursesStats() {
-  const totalRounds = cachedElements.totalRounds || document.getElementById('totalRounds');
-  const avgScore = cachedElements.avgScore || document.getElementById('avgScore');
-  const bestScore = cachedElements.bestScore || document.getElementById('bestScore');
-  const recentTrend = cachedElements.recentTrend || document.getElementById('recentTrend');
+  const totalRounds =
+    cachedElements.totalRounds || document.getElementById('totalRounds');
+  const avgScore =
+    cachedElements.avgScore || document.getElementById('avgScore');
+  const bestScore =
+    cachedElements.bestScore || document.getElementById('bestScore');
+  const recentTrend =
+    cachedElements.recentTrend || document.getElementById('recentTrend');
 
   const includedRounds = rounds.filter((round) => round.includeInHandicap);
   totalRounds.textContent = includedRounds.length;
 
   if (includedRounds.length > 0) {
-    const avgScoreValue = includedRounds.reduce((sum, round) => sum + round.adjScore, 0) / includedRounds.length;
+    const avgScoreValue =
+      includedRounds.reduce((sum, round) => sum + round.adjScore, 0) /
+      includedRounds.length;
     avgScore.textContent = avgScoreValue.toFixed(1);
 
-    const bestScoreValue = Math.min(...includedRounds.map((round) => round.adjScore));
+    const bestScoreValue = Math.min(
+      ...includedRounds.map((round) => round.adjScore)
+    );
     bestScore.textContent = bestScoreValue;
 
     if (includedRounds.length >= 10) {
       const recent5 = includedRounds.slice(0, 5);
       const previous5 = includedRounds.slice(5, 10);
-      const recentAvg = recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
-      const previousAvg = previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const recentAvg =
+        recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const previousAvg =
+        previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
       const trend = recentAvg - previousAvg;
-      recentTrend.textContent = trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
+      recentTrend.textContent =
+        trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
     } else {
       recentTrend.textContent = '--';
     }
@@ -597,10 +657,18 @@ function updateAllCoursesStats() {
 }
 
 function updateRegulationStats() {
-  const regulationTotalRounds = cachedElements.regulationTotalRounds || document.getElementById('regulationTotalRounds');
-  const regulationAvgScore = cachedElements.regulationAvgScore || document.getElementById('regulationAvgScore');
-  const regulationBestScore = cachedElements.regulationBestScore || document.getElementById('regulationBestScore');
-  const regulationRecentTrend = cachedElements.regulationRecentTrend || document.getElementById('regulationRecentTrend');
+  const regulationTotalRounds =
+    cachedElements.regulationTotalRounds ||
+    document.getElementById('regulationTotalRounds');
+  const regulationAvgScore =
+    cachedElements.regulationAvgScore ||
+    document.getElementById('regulationAvgScore');
+  const regulationBestScore =
+    cachedElements.regulationBestScore ||
+    document.getElementById('regulationBestScore');
+  const regulationRecentTrend =
+    cachedElements.regulationRecentTrend ||
+    document.getElementById('regulationRecentTrend');
 
   const regulationRounds = rounds.filter(
     (round) => round.includeInHandicap && round.courseType === 'regulation'
@@ -609,19 +677,26 @@ function updateRegulationStats() {
   regulationTotalRounds.textContent = regulationRounds.length;
 
   if (regulationRounds.length > 0) {
-    const avgScoreValue = regulationRounds.reduce((sum, round) => sum + round.adjScore, 0) / regulationRounds.length;
+    const avgScoreValue =
+      regulationRounds.reduce((sum, round) => sum + round.adjScore, 0) /
+      regulationRounds.length;
     regulationAvgScore.textContent = avgScoreValue.toFixed(1);
 
-    const bestScoreValue = Math.min(...regulationRounds.map((round) => round.adjScore));
+    const bestScoreValue = Math.min(
+      ...regulationRounds.map((round) => round.adjScore)
+    );
     regulationBestScore.textContent = bestScoreValue;
 
     if (regulationRounds.length >= 10) {
       const recent5 = regulationRounds.slice(0, 5);
       const previous5 = regulationRounds.slice(5, 10);
-      const recentAvg = recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
-      const previousAvg = previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const recentAvg =
+        recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const previousAvg =
+        previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
       const trend = recentAvg - previousAvg;
-      regulationRecentTrend.textContent = trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
+      regulationRecentTrend.textContent =
+        trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
     } else {
       regulationRecentTrend.textContent = '--';
     }
@@ -644,8 +719,13 @@ function clearForm() {
   (cachedElements.parInput || document.getElementById('par')).value = '';
   (cachedElements.ratingInput || document.getElementById('rating')).value = '';
   (cachedElements.slopeInput || document.getElementById('slope')).value = '';
-  (cachedElements.courseTypeSelect || document.getElementById('courseType')).value = '';
-  (cachedElements.includeHandicapSelect || document.getElementById('includeInHandicap')).value = 'true';
+  (
+    cachedElements.courseTypeSelect || document.getElementById('courseType')
+  ).value = '';
+  (
+    cachedElements.includeHandicapSelect ||
+    document.getElementById('includeInHandicap')
+  ).value = 'true';
 }
 
 async function toggleHandicapInclusion(roundId) {
@@ -657,7 +737,6 @@ async function toggleHandicapInclusion(roundId) {
     updateDisplay();
 
     await retryOperation(() => updateRoundInSheet(round));
-
   } catch (error) {
     const round = rounds.find((r) => r.id === roundId);
     if (round) {
