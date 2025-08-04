@@ -2,7 +2,7 @@
 
 **⚠️ Personal Data Alert**: This is my actual golf tracking app with real (embarrassingly high) scores.  
 
-### **Only The Brave** Should Look Here 👉 [Carl's Golf Shame Repository 🤦‍♂️](https://thebimsider.github.io/GHTP/V021/)
+### Only The Brave Should Look Here 👉 [Carl's Golf Shame Repository 🤦‍♂️](https://thebimsider.github.io/GHTP/V021/)
 
 My personal version of the public GHT app - trust me nobody wants these golf stats ⛳🤔
 
