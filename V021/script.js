@@ -1,9 +1,10 @@
 /* ========================================
-   GOLF HANDICAP TRACKER - JAVASCRIPT WITH TEES SUPPORT
+   PAR-TRACKER 42 - GOLF HANDICAP TRACKER
    ========================================
-   
-   Updated to include "Tees Played" field for better golf tracking
-   
+
+   Logs golf rounds to a Google Sheet (via SheetDB) and calculates
+   "All Courses" and "Regulation Only" handicaps from them.
+
    ======================================== */
 
 // ========================================
@@ -13,7 +14,7 @@
 let rounds = [];
 let currentSort = {
   column: 'date',
-  direction: 'desc',
+  direction: 'desc'
 };
 
 const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/wshtvyw9sdvff';
@@ -23,14 +24,14 @@ const CONFIG = {
   RETRY_DELAY: 1000,
   COURSE_TYPES: {
     regulation: 'Regulation',
-    executive: 'Executive',
+    executive: 'Executive', 
     par3: 'Par 3',
-    practice: 'Practice',
+    practice: 'Practice'
   },
   HANDICAP_RULES: {
     MIN_ROUNDS_FOR_TREND: 10,
-    USGA_FACTOR: 0.96,
-  },
+    USGA_FACTOR: 0.96
+  }
 };
 
 let cachedElements = {};
@@ -61,24 +62,21 @@ function cacheElements() {
     // Form elements
     dateInput: document.getElementById('date'),
     courseInput: document.getElementById('course'),
-    teesInput: document.getElementById('tees'), // NEW: Tees input
-    holesSelect: document.getElementById('holes'),
+    teesInput: document.getElementById('tees'),    holesSelect: document.getElementById('holes'),
     scoreInput: document.getElementById('score'),
     parInput: document.getElementById('par'),
     ratingInput: document.getElementById('rating'),
     slopeInput: document.getElementById('slope'),
     courseTypeSelect: document.getElementById('courseType'),
     includeHandicapSelect: document.getElementById('includeInHandicap'),
-
+    
     // Display elements
     handicapDisplay: document.getElementById('handicapDisplay'),
     roundsUsed: document.getElementById('roundsUsed'),
-    regulationHandicapDisplay: document.getElementById(
-      'regulationHandicapDisplay'
-    ),
+    regulationHandicapDisplay: document.getElementById('regulationHandicapDisplay'),
     regulationRoundsUsed: document.getElementById('regulationRoundsUsed'),
     roundsBody: document.getElementById('roundsBody'),
-
+    
     // Stats elements
     totalRounds: document.getElementById('totalRounds'),
     avgScore: document.getElementById('avgScore'),
@@ -87,33 +85,22 @@ function cacheElements() {
     regulationTotalRounds: document.getElementById('regulationTotalRounds'),
     regulationAvgScore: document.getElementById('regulationAvgScore'),
     regulationBestScore: document.getElementById('regulationBestScore'),
-    regulationRecentTrend: document.getElementById('regulationRecentTrend'),
+    regulationRecentTrend: document.getElementById('regulationRecentTrend')
   };
 }
 
 function validateInputs() {
   const date = cachedElements.dateInput.value.trim();
   const course = cachedElements.courseInput.value.trim();
-  const tees = cachedElements.teesInput.value.trim(); // NEW: Validate tees
-  const holes = parseInt(cachedElements.holesSelect.value);
+  const tees = cachedElements.teesInput.value.trim();  const holes = parseInt(cachedElements.holesSelect.value);
   const score = parseInt(cachedElements.scoreInput.value);
   const par = parseInt(cachedElements.parInput.value);
   const rating = parseFloat(cachedElements.ratingInput.value);
   const slope = parseInt(cachedElements.slopeInput.value);
   const courseType = cachedElements.courseTypeSelect.value;
 
-  // UPDATED: Include tees in validation
-  if (
-    !date ||
-    !course ||
-    !tees ||
-    !holes ||
-    !score ||
-    !par ||
-    !rating ||
-    !slope ||
-    !courseType
-  ) {
+  // All fields are required
+  if (!date || !course || !tees || !holes || !score || !par || !rating || !slope || !courseType) {
     throw new Error('Please fill in all fields');
   }
 
@@ -121,9 +108,7 @@ function validateInputs() {
   if (course.length < 2) {
     throw new Error('Course name must be at least 2 characters');
   }
-  if (tees.length < 1) {
-    // NEW: Tees validation
-    throw new Error('Tees played must be specified');
+  if (tees.length < 1) {    throw new Error('Tees played must be specified');
   }
   if (![9, 18].includes(holes)) {
     throw new Error('Holes must be 9 or 18');
@@ -141,7 +126,7 @@ function validateInputs() {
     throw new Error('Slope rating must be between 55 and 155');
   }
 
-  return { date, course, tees, holes, score, par, rating, slope, courseType }; // UPDATED: Include tees
+  return { date, course, tees, holes, score, par, rating, slope, courseType };
 }
 
 async function retryOperation(operation, maxRetries = CONFIG.MAX_RETRIES) {
@@ -152,34 +137,25 @@ async function retryOperation(operation, maxRetries = CONFIG.MAX_RETRIES) {
       if (attempt === maxRetries) {
         throw error;
       }
-      console.warn(
-        `Attempt ${attempt} failed, retrying in ${CONFIG.RETRY_DELAY}ms...`
-      );
-      await new Promise((resolve) => setTimeout(resolve, CONFIG.RETRY_DELAY));
+      console.warn(`Attempt ${attempt} failed, retrying in ${CONFIG.RETRY_DELAY}ms...`);
+      await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY));
     }
   }
 }
 
 function showError(error, context = 'Operation') {
   console.error(`${context} failed:`, error);
-
+  
   const errorMessages = {
-    'Please fill in all fields':
-      'Please fill in all fields before adding the round.',
-    'Tees played must be specified':
-      'Please specify which tees you played from.',
-    'Failed to save round to sheet':
-      'Unable to save your round. Please check your internet connection and try again.',
-    'Failed to load rounds from sheet':
-      'Unable to load your golf rounds. Please check your internet connection.',
-    'Failed to delete round from sheet':
-      'Unable to delete the round. Please try again.',
-    'Failed to update round in sheet':
-      'Unable to update the round. Please try again.',
+    'Please fill in all fields': 'Please fill in all fields before adding the round.',
+    'Tees played must be specified': 'Please specify which tees you played from.',
+    'Failed to save round to sheet': 'Unable to save your round. Please check your internet connection and try again.',
+    'Failed to load rounds from sheet': 'Unable to load your golf rounds. Please check your internet connection.',
+    'Failed to delete round from sheet': 'Unable to delete the round. Please try again.',
+    'Failed to update round in sheet': 'Unable to update the round. Please try again.'
   };
-
-  const userMessage =
-    errorMessages[error.message] || `${context} failed. Please try again.`;
+  
+  const userMessage = errorMessages[error.message] || `${context} failed. Please try again.`;
   alert(userMessage);
 }
 
@@ -195,10 +171,9 @@ async function addRound() {
 
   try {
     const inputs = validateInputs();
-    const includeInHandicap =
-      cachedElements.includeHandicapSelect.value === 'true';
+    const includeInHandicap = cachedElements.includeHandicapSelect.value === 'true';
 
-    // Original 9-hole conversion logic
+    // 9-hole rounds are doubled to an 18-hole equivalent for the handicap
     let adjScore = inputs.score;
     let adjPar = inputs.par;
 
@@ -207,16 +182,14 @@ async function addRound() {
       adjPar = inputs.par * 2;
     }
 
-    // Original differential calculation
+    // Score differential: (adjusted score - course rating) * 113 / slope
     const differential = ((adjScore - inputs.rating) * 113) / inputs.slope;
 
-    // UPDATED: Include tees in round object
     const round = {
       id: Date.now().toString(),
       date: inputs.date,
       course: inputs.course,
-      tees: inputs.tees, // NEW: Add tees field
-      courseType: inputs.courseType,
+      tees: inputs.tees,      courseType: inputs.courseType,
       includeInHandicap: includeInHandicap,
       holes: inputs.holes,
       score: inputs.score,
@@ -224,7 +197,7 @@ async function addRound() {
       adjScore: adjScore,
       rating: inputs.rating,
       slope: inputs.slope,
-      differential: parseFloat(differential.toFixed(2)),
+      differential: parseFloat(differential.toFixed(2))
     };
 
     await retryOperation(() => saveRoundToSheet(round));
@@ -234,6 +207,7 @@ async function addRound() {
 
     updateDisplay();
     clearForm();
+
   } catch (error) {
     showError(error, 'Adding round');
   } finally {
@@ -287,11 +261,10 @@ async function loadRoundsFromSheet() {
   const data = await response.json();
 
   if (!data || data.length === 0) {
-    console.log('No rounds found in Google Sheet');
     return [];
   }
 
-  // UPDATED: Include tees in data conversion
+  // Sheet values arrive as strings, so convert them to numbers and booleans
   return data.map((round) => {
     const convertedRound = {
       ...round,
@@ -304,7 +277,7 @@ async function loadRoundsFromSheet() {
       differential: parseFloat(round.differential) || 0,
       courseType: round.courseType || 'regulation',
       includeInHandicap: round.includeInHandicap === 'false' ? false : true,
-      tees: round.tees || '', // NEW: Handle tees field with fallback
+      tees: round.tees || '', // rows saved before v2.1 have no tees
     };
 
     return convertedRound;
@@ -331,12 +304,6 @@ async function loadRounds() {
 
     rounds = await retryOperation(loadRoundsFromSheet);
     rounds.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    console.log(
-      'Successfully loaded',
-      rounds.length,
-      'rounds from Google Sheets'
-    );
   } catch (error) {
     console.error('Error loading rounds:', error);
     rounds = [];
@@ -346,27 +313,22 @@ async function loadRounds() {
       if (savedRounds) {
         rounds = JSON.parse(savedRounds);
         rounds.sort((a, b) => new Date(b.date) - new Date(a.date));
-        console.log(
-          'Loaded rounds from localStorage backup:',
-          rounds.length,
-          'rounds'
-        );
       }
     } catch (localError) {
-      console.log('No local backup available', localError);
+      console.error('No local backup available', localError);
     }
   }
 }
 
 // ========================================
-// HANDICAP CALCULATION (UNCHANGED)
+// HANDICAP CALCULATION
 // ========================================
 
 function calculateHandicap(regulationOnly = false) {
   if (rounds.length === 0) return null;
 
   let handicapRounds = rounds.filter((round) => round.includeInHandicap);
-
+  
   if (regulationOnly) {
     handicapRounds = handicapRounds.filter(
       (round) => round.courseType === 'regulation'
@@ -422,9 +384,8 @@ function formatDateForDisplay(dateString) {
 }
 
 function updateRoundsTable() {
-  const tbody =
-    cachedElements.roundsBody || document.getElementById('roundsBody');
-
+  const tbody = cachedElements.roundsBody || document.getElementById('roundsBody');
+  
   if (!tbody) {
     console.error('Could not find table body element');
     return;
@@ -439,31 +400,20 @@ function updateRoundsTable() {
 
   const fragment = document.createDocumentFragment();
 
-  // UPDATED: Include tees in table row
   rounds.forEach((round) => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${formatDateForDisplay(round.date)}</td>
       <td>${round.course || ''}</td>
       <td>${round.tees || ''}</td>
-      <td><span class="course-type-${
-        round.courseType || 'regulation'
-      }">${getCourseTypeDisplay(round.courseType || 'regulation')}</span></td>
+      <td><span class="course-type-${round.courseType || 'regulation'}">${getCourseTypeDisplay(round.courseType || 'regulation')}</span></td>
       <td>${round.holes || ''}</td>
       <td>${round.score || ''}</td>
       <td>${round.par || ''}</td>
       <td>${round.adjScore || ''}</td>
-      <td>${
-        round.differential ? parseFloat(round.differential).toFixed(1) : ''
-      }</td>
-      <td><button class="toggle-handicap-btn ${
-        round.includeInHandicap ? 'included' : 'excluded'
-      }" onclick="toggleHandicapInclusion('${round.id}')">${
-      round.includeInHandicap ? 'Yes' : 'No'
-    }</button></td>
-      <td><button class="delete-btn" onclick="deleteRound('${
-        round.id
-      }')">Delete</button></td>
+      <td>${round.differential ? parseFloat(round.differential).toFixed(1) : ''}</td>
+      <td><button class="toggle-handicap-btn ${round.includeInHandicap ? 'included' : 'excluded'}" onclick="toggleHandicapInclusion('${round.id}')">${round.includeInHandicap ? 'Yes' : 'No'}</button></td>
+      <td><button class="delete-btn" onclick="deleteRound('${round.id}')">Delete</button></td>
     `;
     fragment.appendChild(row);
   });
@@ -495,8 +445,7 @@ function sortTable(column) {
         valueA = (a.course || '').toLowerCase();
         valueB = (b.course || '').toLowerCase();
         break;
-      case 'tees': // NEW: Add tees sorting
-        valueA = (a.tees || '').toLowerCase();
+      case 'tees':        valueA = (a.tees || '').toLowerCase();
         valueB = (b.tees || '').toLowerCase();
         break;
       case 'type':
@@ -545,18 +494,17 @@ function sortTable(column) {
 
 function updateSortIndicators() {
   const headers = document.querySelectorAll('#roundsTable th');
-
+  
   headers.forEach((header) => {
     header.innerHTML = header.innerHTML.replace(/\s*[↑↓]/, '');
     header.classList.remove('sorted-asc', 'sorted-desc');
   });
 
-  // UPDATED: Include tees in column mapping
+  // Maps each sortable field to its column position for the sort arrows
   const columnMap = {
     date: 0,
     course: 1,
-    tees: 2, // NEW: Tees column
-    type: 3,
+    tees: 2,    type: 3,
     holes: 4,
     score: 5,
     par: 6,
@@ -575,11 +523,8 @@ function updateSortIndicators() {
 
 function updateHandicapDisplay() {
   const overallHandicapResult = calculateHandicap(false);
-  const handicapDisplay =
-    cachedElements.handicapDisplay ||
-    document.getElementById('handicapDisplay');
-  const roundsUsed =
-    cachedElements.roundsUsed || document.getElementById('roundsUsed');
+  const handicapDisplay = cachedElements.handicapDisplay || document.getElementById('handicapDisplay');
+  const roundsUsed = cachedElements.roundsUsed || document.getElementById('roundsUsed');
 
   if (overallHandicapResult) {
     handicapDisplay.textContent = overallHandicapResult.handicap.toFixed(1);
@@ -590,16 +535,11 @@ function updateHandicapDisplay() {
   }
 
   const regulationHandicapResult = calculateHandicap(true);
-  const regulationHandicapDisplay =
-    cachedElements.regulationHandicapDisplay ||
-    document.getElementById('regulationHandicapDisplay');
-  const regulationRoundsUsed =
-    cachedElements.regulationRoundsUsed ||
-    document.getElementById('regulationRoundsUsed');
+  const regulationHandicapDisplay = cachedElements.regulationHandicapDisplay || document.getElementById('regulationHandicapDisplay');
+  const regulationRoundsUsed = cachedElements.regulationRoundsUsed || document.getElementById('regulationRoundsUsed');
 
   if (regulationHandicapResult) {
-    regulationHandicapDisplay.textContent =
-      regulationHandicapResult.handicap.toFixed(1);
+    regulationHandicapDisplay.textContent = regulationHandicapResult.handicap.toFixed(1);
     regulationRoundsUsed.textContent = `${regulationHandicapResult.roundsUsed} of ${regulationHandicapResult.totalHandicapRounds} eligible`;
   } else {
     regulationHandicapDisplay.textContent = '--';
@@ -613,39 +553,28 @@ function updateStats() {
 }
 
 function updateAllCoursesStats() {
-  const totalRounds =
-    cachedElements.totalRounds || document.getElementById('totalRounds');
-  const avgScore =
-    cachedElements.avgScore || document.getElementById('avgScore');
-  const bestScore =
-    cachedElements.bestScore || document.getElementById('bestScore');
-  const recentTrend =
-    cachedElements.recentTrend || document.getElementById('recentTrend');
+  const totalRounds = cachedElements.totalRounds || document.getElementById('totalRounds');
+  const avgScore = cachedElements.avgScore || document.getElementById('avgScore');
+  const bestScore = cachedElements.bestScore || document.getElementById('bestScore');
+  const recentTrend = cachedElements.recentTrend || document.getElementById('recentTrend');
 
   const includedRounds = rounds.filter((round) => round.includeInHandicap);
   totalRounds.textContent = includedRounds.length;
 
   if (includedRounds.length > 0) {
-    const avgScoreValue =
-      includedRounds.reduce((sum, round) => sum + round.adjScore, 0) /
-      includedRounds.length;
+    const avgScoreValue = includedRounds.reduce((sum, round) => sum + round.adjScore, 0) / includedRounds.length;
     avgScore.textContent = avgScoreValue.toFixed(1);
 
-    const bestScoreValue = Math.min(
-      ...includedRounds.map((round) => round.adjScore)
-    );
+    const bestScoreValue = Math.min(...includedRounds.map((round) => round.adjScore));
     bestScore.textContent = bestScoreValue;
 
     if (includedRounds.length >= 10) {
       const recent5 = includedRounds.slice(0, 5);
       const previous5 = includedRounds.slice(5, 10);
-      const recentAvg =
-        recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
-      const previousAvg =
-        previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const recentAvg = recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const previousAvg = previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
       const trend = recentAvg - previousAvg;
-      recentTrend.textContent =
-        trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
+      recentTrend.textContent = trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
     } else {
       recentTrend.textContent = '--';
     }
@@ -657,18 +586,10 @@ function updateAllCoursesStats() {
 }
 
 function updateRegulationStats() {
-  const regulationTotalRounds =
-    cachedElements.regulationTotalRounds ||
-    document.getElementById('regulationTotalRounds');
-  const regulationAvgScore =
-    cachedElements.regulationAvgScore ||
-    document.getElementById('regulationAvgScore');
-  const regulationBestScore =
-    cachedElements.regulationBestScore ||
-    document.getElementById('regulationBestScore');
-  const regulationRecentTrend =
-    cachedElements.regulationRecentTrend ||
-    document.getElementById('regulationRecentTrend');
+  const regulationTotalRounds = cachedElements.regulationTotalRounds || document.getElementById('regulationTotalRounds');
+  const regulationAvgScore = cachedElements.regulationAvgScore || document.getElementById('regulationAvgScore');
+  const regulationBestScore = cachedElements.regulationBestScore || document.getElementById('regulationBestScore');
+  const regulationRecentTrend = cachedElements.regulationRecentTrend || document.getElementById('regulationRecentTrend');
 
   const regulationRounds = rounds.filter(
     (round) => round.includeInHandicap && round.courseType === 'regulation'
@@ -677,26 +598,19 @@ function updateRegulationStats() {
   regulationTotalRounds.textContent = regulationRounds.length;
 
   if (regulationRounds.length > 0) {
-    const avgScoreValue =
-      regulationRounds.reduce((sum, round) => sum + round.adjScore, 0) /
-      regulationRounds.length;
+    const avgScoreValue = regulationRounds.reduce((sum, round) => sum + round.adjScore, 0) / regulationRounds.length;
     regulationAvgScore.textContent = avgScoreValue.toFixed(1);
 
-    const bestScoreValue = Math.min(
-      ...regulationRounds.map((round) => round.adjScore)
-    );
+    const bestScoreValue = Math.min(...regulationRounds.map((round) => round.adjScore));
     regulationBestScore.textContent = bestScoreValue;
 
     if (regulationRounds.length >= 10) {
       const recent5 = regulationRounds.slice(0, 5);
       const previous5 = regulationRounds.slice(5, 10);
-      const recentAvg =
-        recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
-      const previousAvg =
-        previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const recentAvg = recent5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
+      const previousAvg = previous5.reduce((sum, round) => sum + round.adjScore, 0) / 5;
       const trend = recentAvg - previousAvg;
-      regulationRecentTrend.textContent =
-        trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
+      regulationRecentTrend.textContent = trend > 0 ? `+${trend.toFixed(1)}` : trend.toFixed(1);
     } else {
       regulationRecentTrend.textContent = '--';
     }
@@ -713,19 +627,13 @@ function updateRegulationStats() {
 
 function clearForm() {
   (cachedElements.courseInput || document.getElementById('course')).value = '';
-  (cachedElements.teesInput || document.getElementById('tees')).value = ''; // NEW: Clear tees field
-  (cachedElements.holesSelect || document.getElementById('holes')).value = '';
+  (cachedElements.teesInput || document.getElementById('tees')).value = '';  (cachedElements.holesSelect || document.getElementById('holes')).value = '';
   (cachedElements.scoreInput || document.getElementById('score')).value = '';
   (cachedElements.parInput || document.getElementById('par')).value = '';
   (cachedElements.ratingInput || document.getElementById('rating')).value = '';
   (cachedElements.slopeInput || document.getElementById('slope')).value = '';
-  (
-    cachedElements.courseTypeSelect || document.getElementById('courseType')
-  ).value = '';
-  (
-    cachedElements.includeHandicapSelect ||
-    document.getElementById('includeInHandicap')
-  ).value = 'true';
+  (cachedElements.courseTypeSelect || document.getElementById('courseType')).value = '';
+  (cachedElements.includeHandicapSelect || document.getElementById('includeInHandicap')).value = 'true';
 }
 
 async function toggleHandicapInclusion(roundId) {
@@ -737,6 +645,7 @@ async function toggleHandicapInclusion(roundId) {
     updateDisplay();
 
     await retryOperation(() => updateRoundInSheet(round));
+
   } catch (error) {
     const round = rounds.find((r) => r.id === roundId);
     if (round) {
@@ -777,28 +686,15 @@ function getCourseTypeDisplay(courseType) {
 }
 
 /* ========================================
-   TEES FIELD IMPLEMENTATION NOTES
+   GOOGLE SHEET COLUMN ORDER
    ========================================
-   
-   ✅ CHANGES MADE:
-   - Added tees input field to HTML form
-   - Added tees column to rounds table
-   - Updated validation to require tees field
-   - Added tees to round object creation
-   - Added tees to data loading and conversion
-   - Added tees sorting functionality
-   - Added tees to form clearing
-   - Updated table column mapping for sort indicators
-   
-   ✅ GOOGLE SHEETS SETUP REQUIRED:
-   Add new column "tees" to your Google Sheet
-   Position: After "course" column (column C)
-   
-   Updated column order should be:
+
+   The Sheet behind SHEETDB_API_URL must have these columns, in this order:
+
    A: id
-   B: date  
+   B: date
    C: course
-   D: tees          ← NEW COLUMN
+   D: tees
    E: courseType
    F: includeInHandicap
    G: holes
@@ -808,5 +704,5 @@ function getCourseTypeDisplay(courseType) {
    K: rating
    L: slope
    M: differential
-   
+
    ======================================== */
